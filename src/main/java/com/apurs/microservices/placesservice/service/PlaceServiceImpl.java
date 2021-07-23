@@ -5,7 +5,11 @@ import java.util.List;
 
 import org.modelmapper.ModelMapper;
 import org.modelmapper.convention.MatchingStrategies;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
 import com.apurs.microservices.placesservice.dto.PlaceCreateDTO;
 import com.apurs.microservices.placesservice.dto.PlaceDTO;
@@ -18,7 +22,14 @@ public class PlaceServiceImpl implements PlaceService {
 
 	private PlaceRepository placeRepository;
 	
+	private RestTemplate restTemplate = new RestTemplate();
 	private ModelMapper modelMapper = new ModelMapper();
+	
+	@Value("${app.classroomsEndpoint}")
+	private String classroomsEndpoint;
+	
+	@Value("${app.coursesEndpoint}")
+	private String coursesEndpoint;
 	
 	public PlaceServiceImpl(PlaceRepository placeRepository) {
 		this.placeRepository = placeRepository;
@@ -43,22 +54,39 @@ public class PlaceServiceImpl implements PlaceService {
 	}
 
 	@Override
-	public PlaceDTO insert(PlaceCreateDTO place) {
+	public PlaceDTO insert(PlaceCreateDTO place) throws Exception {
+		ResponseEntity<String> resClassroom = restTemplate.getForEntity(classroomsEndpoint + place.getClassroomId(), String.class);
+		ResponseEntity<String> resCourse = restTemplate.getForEntity(coursesEndpoint + place.getCourseId(), String.class);
+
+		if (!resClassroom.getStatusCode().equals(HttpStatus.OK))
+			throw new Exception("Invalid classroomId.");
+		
+		if (!resCourse.getStatusCode().equals(HttpStatus.OK))
+			throw new Exception("Invalid courseId.");
+		
 		Place createPlace = modelMapper.map(place, Place.class);
 		createPlace = placeRepository.save(createPlace);
 		return modelMapper.map(createPlace, PlaceDTO.class);
 	}
 
 	@Override
-	public PlaceDTO update(PlaceUpdateDTO place) {
+	public PlaceDTO update(PlaceUpdateDTO place) throws Exception {
 		if(!placeRepository.existsById(place.getId()))
 			return null;
+		
+		ResponseEntity<String> resClassroom = restTemplate.getForEntity(classroomsEndpoint + place.getClassroomId(), String.class);
+		ResponseEntity<String> resCourse = restTemplate.getForEntity(coursesEndpoint + place.getCourseId(), String.class);
+
+		if (!resClassroom.getStatusCode().equals(HttpStatus.OK))
+			throw new Exception("Invalid classroomId.");
+		
+		if (!resCourse.getStatusCode().equals(HttpStatus.OK))
+			throw new Exception("Invalid courseId.");
 		
 		Place tempPlace = placeRepository.getById(place.getId());
 		Place updatedPlace = modelMapper.map(place, Place.class);
 		updatedPlace.setCreatedAt(tempPlace.getCreatedAt());
 		updatedPlace = placeRepository.save(updatedPlace);
-		
 		return modelMapper.map(updatedPlace, PlaceDTO.class);
 	}
 

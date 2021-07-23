@@ -38,7 +38,7 @@ public class PlaceRestController {
 	
 	
 	@PostMapping("")
-	public ResponseEntity<PlaceDTO> insertPlace(@RequestBody PlaceCreateDTO place) {
+	public ResponseEntity<PlaceDTO> insertPlace(@RequestBody PlaceCreateDTO place) throws Exception {
 		if (placeService.insert(place) != null)
 			return new ResponseEntity<>(HttpStatus.OK);
 		
@@ -46,7 +46,7 @@ public class PlaceRestController {
 	}
 	
 	@PutMapping("")
-	public ResponseEntity<PlaceDTO> updatePlace(@RequestBody PlaceUpdateDTO place) {
+	public ResponseEntity<PlaceDTO> updatePlace(@RequestBody PlaceUpdateDTO place) throws Exception {
 		if (placeService.update(place) != null)
 			return new ResponseEntity<>(HttpStatus.OK);
 		
